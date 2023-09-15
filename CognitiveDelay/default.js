@@ -123,7 +123,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
         email_summary.querySelector('.from').innerText = `${random_person[0]} ${random_person[1]} <${email_address}>`;
         email_summary.querySelector('.subject').innerText = subject;
         email_summary.classList.add('email');
-        email_summary.querySelector('button.delete').addEventListener('click', () => {
+        email_summary.querySelector('button.delete').addEventListener('mousedown', () => {
             const clicked_email_index = [...email_list.childNodes].indexOf(email_summary);
             console.log(`Deleting email ${clicked_email_index}`);
             if (domain === domain_to_archive) {
@@ -136,7 +136,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
             email_to_remove.classList.remove('show');
             email_to_remove.addEventListener('transitionend', () => email_count--, {once: true});
         });
-        email_summary.querySelector('button.archive').addEventListener('click', () => {
+        email_summary.querySelector('button.archive').addEventListener('mousedown', () => {
             const archived_email_index = [...email_list.childNodes].indexOf(email_summary);
             console.log(`Archiving email ${archived_email_index}`);
             if (domain === domain_to_archive) {
