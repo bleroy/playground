@@ -1,6 +1,7 @@
 'use strict';
 
-const test_duration = 60000; // 1 minute
+const test_duration = 1 /* min */ * 60000;
+const cognitive_delay = 200; // ms
 
 const folks = [
     ["Izabella", "Celma"],
@@ -96,10 +97,12 @@ window.document.addEventListener('DOMContentLoaded', () => {
     const results_section = document.getElementById('final-results');
     const results_download = document.getElementById('result-file');
 
+    let list_before_transition = [];
+    let transition_end = null;
+
     let email_count = 0;
     let test_running = false;
     let transitioning = false;
-    let latest_entered_email = null;
     let deleted_right = 0;
     let deleted_wrong = 0;
     let archived_right = 0;
@@ -124,6 +127,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
         email_summary.querySelector('.subject').innerText = subject;
         email_summary.classList.add('email');
         email_summary.querySelector('button.delete').addEventListener('mousedown', () => {
+            const click_time = new Date().getTime();
             const clicked_email_index = [...email_list.childNodes].indexOf(email_summary);
             console.log(`Deleting email ${clicked_email_index}`);
             if (domain === domain_to_archive) {
@@ -131,12 +135,13 @@ window.document.addEventListener('DOMContentLoaded', () => {
             } else {
                 deleted_right++;
             }
-            const email_to_remove = (phase + group) % 2 === 0 ? email_summary : latest_entered_email;
-            latest_entered_email = null;
+            const email_to_remove = (phase + group) % 2 === 0 || (click_time - transition_end > cognitive_delay) ? email_summary : list_before_transition[clicked_email_index];
+            if (email_to_remove !== email_summary) console.log(`Email to remove is not the same as the one that was clicked (${transition_end - click_time}ms elapsed since transition end.`);
             email_to_remove.classList.remove('show');
             email_to_remove.addEventListener('transitionend', () => email_count--, {once: true});
         });
         email_summary.querySelector('button.archive').addEventListener('mousedown', () => {
+            const click_time = new Date().getTime();
             const archived_email_index = [...email_list.childNodes].indexOf(email_summary);
             console.log(`Archiving email ${archived_email_index}`);
             if (domain === domain_to_archive) {
@@ -144,24 +149,27 @@ window.document.addEventListener('DOMContentLoaded', () => {
             } else {
                 archived_wrong++;
             }
-            const email_to_archive = (phase + group) % 2 ? email_summary : latest_entered_email;
-            latest_entered_email = null;
+            const email_to_archive = (phase + group) % 2 === 0 || (click_time - transition_end > cognitive_delay) ? email_summary : list_before_transition[archived_email_index];
+            if (email_to_archive !== email_summary) console.log(`Email to remove is not the same as the one that was clicked (${transition_end - click_time}ms elapsed since transition end.`);
             email_to_archive.classList.remove('show');
             email_to_archive.addEventListener('transitionend', () => email_count--, {once: true});
         });
         email_summary.addEventListener('transitionstart', () => {
             console.log('Transitioning new email in.');
             transitioning = true;
+            transition_end = null;
         });
         email_summary.addEventListener('transitionend', () => {
             console.log('Done transitioning new email in.');
             transitioning = false;
+            transition_end = new Date().getTime();
 
             if (!test_running) return;
     
             console.log('Queueing next email');
             setTimeout(addEmail, nextEmailDelay());
         }, {once: true});
+        list_before_transition = [...email_list.childNodes];
         email_list.insertBefore(email_summary, email_list.childNodes[0]);
         
         setTimeout(() => {
@@ -171,13 +179,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
             }, 350);
         }, 15);
     }
-
-    email_list.addEventListener('mousemove', e => {
-        const aimed_at_email = findParent(e.target, 'email-summary');
-        if (aimed_at_email === latest_entered_email) return;
-        latest_entered_email = aimed_at_email;
-        console.log(`Aimed at email ${latest_entered_email.querySelector('.from').innerText}`);
-    });
 
     start_button.addEventListener('click', () => {
         email_list.innerHTML = '';
