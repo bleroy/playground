@@ -106,6 +106,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
     let archived_wrong = 0;
     let phase = 0;
     let phase_one_results = null;
+    let group = Math.random() > 0.5 ? 0 : 1;
 
     let nextEmailDelay = () => Math.floor(Math.random() * email_count < 5 ? 200 : 2000);
 
@@ -130,7 +131,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
             } else {
                 deleted_right++;
             }
-            const email_to_remove = phase === 0 ? email_summary : latest_entered_email;
+            const email_to_remove = (phase + group) % 2 === 0 ? email_summary : latest_entered_email;
             latest_entered_email = null;
             email_to_remove.classList.remove('show');
             email_to_remove.addEventListener('transitionend', () => email_count--, {once: true});
@@ -143,7 +144,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
             } else {
                 archived_wrong++;
             }
-            const email_to_archive = phase === 0 ? email_summary : latest_entered_email;
+            const email_to_archive = (phase + group) % 2 ? email_summary : latest_entered_email;
             latest_entered_email = null;
             email_to_archive.classList.remove('show');
             email_to_archive.addEventListener('transitionend', () => email_count--, {once: true});
@@ -204,6 +205,7 @@ window.document.addEventListener('DOMContentLoaded', () => {
             else {
                 results_section.style.display = 'block';
                 results_download.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify({
+                    group,
                     phase1: phase_one_results,
                     phase2: {
                         deleted_right,
